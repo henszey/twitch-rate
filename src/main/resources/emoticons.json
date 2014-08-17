@@ -5,7 +5,6 @@
   "emoticons": [
     {
       "regex": "༼ つ ◕_◕ ༽つ",
-      "color" : "#00FF00",
       "images": [
         {
           "width": 27.0,
@@ -16,8 +15,71 @@
     },
     
     
+    {
+      "regex": "༼ຈل͜ຈ༽",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/donger.png"
+        }
+      ]
+    },
     
     
+    {
+      "regex": "( ͡° ͜ʖ ͡°)",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/lenny.png"
+        }
+      ]
+    },
+    {
+      "regex": "༼ಠ益ಠ༽",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/rager.png"
+        }
+      ]
+    },
+    {
+      "regex": "ಠ_ಠ",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/disapoint.png"
+        }
+      ]
+    },
+
+    {
+      "regex": "AMENO",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/ameno.png"
+        }
+      ]
+    },
+    
+    
+    {
+      "regex": "DUDU",
+      "images": [
+        {
+          "width": 27.0,
+          "height": 28.0,
+          "url": "assets/dudu.png"
+        }
+      ]
+    },
     
     
     
