@@ -1,0 +1,42 @@
+buildscript {
+  repositories {
+      mavenCentral()
+  }
+  dependencies {
+      classpath("org.springframework.boot:spring-boot-gradle-plugin:1.1.5.RELEASE")
+  }
+}
+
+repositories {
+  maven { url "http://nexus.wsd.bucklehq.com:8080/content/repositories/public" }
+  mavenLocal()
+  mavenCentral()
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+jar {
+  baseName = 'twitch-pricer'
+}
+
+dependencies {
+  compile('org.springframework.boot:spring-boot-starter')
+  compile("org.springframework.boot:spring-boot-starter-amqp")
+  
+  compile('com.google.code.gson:gson:2.2.4')
+  compile('pircbot:pircbot:1.5.0')
+  compile('org.apache.commons:commons-io:1.3.2')
+  compile('com.google.guava:guava:17.0')
+
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.11'
+}
