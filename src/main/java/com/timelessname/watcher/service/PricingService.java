@@ -100,10 +100,6 @@ public class PricingService {
     Collections.sort(prices);
     emoticonPrices = prices;
     
-
-    //Type listType = new TypeToken<ArrayList<EmoticonPrice>>(){private static final long serialVersionUID = 1L;}.getType();
-    //gson.fromJson(gson.toJson(emoticonPrices), listType);
-    
     rabbitTemplate.convertAndSend(exchangeName, queueName, gson.toJson(emoticonPrices));
 
     List<ChannelData> data = new ArrayList<ChannelData>();
