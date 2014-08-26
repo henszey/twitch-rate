@@ -1,9 +1,12 @@
 package com.timelessname.watcher.config;
 
+import java.util.UUID;
+
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AnonymousQueue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.BindingBuilder.TopicExchangeRoutingKeyConfigurer;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
@@ -20,13 +23,10 @@ import com.timelessname.watcher.service.PricingService;
 @Configuration
 public class RabbitConfig {
 
-
-  @Value("${rabbit.watcher.queueName}")
-  String queueName;
-
-  @Value("${rabbit.watcher.exchangeName}")
+  @Value("${twitch.chat.exchangeName}")
   String exchangeName;
 
+  String queueName = UUID.randomUUID().toString();
 
   @Bean
   Queue queue() {
@@ -34,13 +34,13 @@ public class RabbitConfig {
   }
 
   @Bean
-  FanoutExchange exchange() {
-    return new FanoutExchange(exchangeName,false,false);
+  TopicExchange exchange() {
+    return new TopicExchange(exchangeName,false,false);
   }
 
   @Bean
-  Binding binding(Queue queue, FanoutExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange);
+  Binding binding(Queue queue, TopicExchange exchange) {
+    return BindingBuilder.bind(queue).to(exchange).with("*.message");
   }
 
   @Bean
@@ -53,12 +53,9 @@ public class RabbitConfig {
     return container;
   }
 
-
-
   @Bean
   MessageListenerAdapter listenerAdapter(PricingService pricingService) {
     return new MessageListenerAdapter(pricingService, "receiveMessage");
   }
-
   
 }

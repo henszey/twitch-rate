@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Resource;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.timelessname.watcher.domain.ChannelData;
@@ -35,17 +38,11 @@ public class PricingService {
   @Resource
   List<String> emoticonList;
 
-  @Value("${rabbit.queueName}")
-  String queueName;
 
   @Value("${rabbit.exchangeName}")
   String exchangeName;
 
-  @Value("${rabbit.channel.queueName}")
-  String channelQueueName;
 
-  @Value("${rabbit.channel.exchangeName}")
-  String channelExchangeName;
   
   @Autowired
   RabbitTemplate rabbitTemplate;
@@ -69,8 +66,10 @@ public class PricingService {
     return channelDatas;
   }
 
-  @Scheduled(fixedDelay = 20)
+  @Scheduled(fixedDelay = 33)
   public void calculateStats() {
+    
+    long tTime = System.nanoTime();
 
     long curTime;
 
@@ -78,6 +77,7 @@ public class PricingService {
 
     curTime = System.currentTimeMillis();
     synchronized (emoticonTimes) {
+      List<String> emoticonsToRemove = Lists.newArrayList();
       for (String emoticonKey : emoticonTimes.keySet()) {
         List<Long> times = emoticonTimes.get(emoticonKey);
         int count = 0;
@@ -89,7 +89,14 @@ public class PricingService {
             iterator.remove();
           }
         }
+        if(count == 0){
+          emoticonsToRemove.add(emoticonKey);
+        }
+        
         emoticonCounts.put(emoticonKey, count);
+      }
+      for (String emoticon : emoticonsToRemove) {
+        emoticonTimes.remove(emoticon);
       }
     }
 
@@ -98,16 +105,40 @@ public class PricingService {
       prices.add(new EmoticonPrice(emoticonKey, emoticonCounts.get(emoticonKey)));
     }
     Collections.sort(prices);
+    
+    
+    boolean updated = false;
+    
+//    if(emoticonPrices != null){
+//      if(emoticonPrices.size() != prices.size()){
+//        updated = true;
+//      } else {
+//        for (int i = 0; i < emoticonPrices.size() && i < prices.size(); i++) {
+//          if(emoticonPrices.get(i).getPrice() != prices.get(i).getPrice()){
+//            updated = true;
+//            break;
+//          }
+//        }
+//      }
+//    } else {
+      updated = true;
+//    }
+
     emoticonPrices = prices;
     
-    rabbitTemplate.convertAndSend(exchangeName, queueName, gson.toJson(emoticonPrices));
-
+    if(updated){
+      rabbitTemplate.convertAndSend(exchangeName, "emoticons", gson.toJson(emoticonPrices));
+    }
+    
     List<ChannelData> data = new ArrayList<ChannelData>();
 
     synchronized (channelMemeTimes) {
+      
+      List<String> channelsToRemove = Lists.newArrayList();
       for (String channel : channelMemeTimes.keySet()) {
         Map<String, List<Long>> channelEmotes = channelMemeTimes.get(channel);
         TreeMap<Integer, String> priceToEmote = new TreeMap<Integer, String>();
+        int totalChannelCount = 0;
         for (String emote : channelEmotes.keySet()) {
           List<Long> emoteTimes = channelEmotes.get(emote);
           int count = 0;
@@ -115,12 +146,16 @@ public class PricingService {
             Long time = iterator.next();
             if (curTime - 60000 < time) {
               count++;
+              totalChannelCount++;
             } else {
               iterator.remove();
             }
           }
           priceToEmote.put(count, emote);
 
+        }
+        if(totalChannelCount == 0){
+          channelsToRemove.add(channel);
         }
 
         if (priceToEmote.descendingKeySet().size() > 0) {
@@ -134,6 +169,9 @@ public class PricingService {
         }
 
       }
+      for (String channel : channelsToRemove) {
+        channelMemeTimes.remove(channel);
+      }
     }
     Collections.sort(data, new Comparator<ChannelData>() {
       @Override
@@ -144,9 +182,11 @@ public class PricingService {
 
     channelDatas = data.subList(0, data.size() > 10 ? 10 : data.size());
 
-
-    rabbitTemplate.convertAndSend(channelExchangeName, channelQueueName, gson.toJson(channelDatas));
+    rabbitTemplate.convertAndSend(exchangeName, "channels", gson.toJson(channelDatas));
     
+    double t = ((System.nanoTime() - tTime)/1000000.0);
+    if( t> 1)
+    System.out.println(t);
   }
 
   public void receiveMessage(String json) {
