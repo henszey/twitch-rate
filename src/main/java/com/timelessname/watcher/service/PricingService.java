@@ -127,7 +127,7 @@ public class PricingService {
     emoticonPrices = prices;
     
     if(updated){
-      rabbitTemplate.convertAndSend(exchangeName, "emoticons", gson.toJson(emoticonPrices));
+      rabbitTemplate.convertAndSend(exchangeName, "twitch.rate.emoticons", gson.toJson(emoticonPrices));
     }
     
     List<ChannelData> data = new ArrayList<ChannelData>();
@@ -182,7 +182,7 @@ public class PricingService {
 
     channelDatas = data.subList(0, data.size() > 10 ? 10 : data.size());
 
-    rabbitTemplate.convertAndSend(exchangeName, "channels", gson.toJson(channelDatas));
+    rabbitTemplate.convertAndSend(exchangeName, "twitch.rate.channels", gson.toJson(channelDatas));
     
     double t = ((System.nanoTime() - tTime)/1000000.0);
     if( t> 1)
