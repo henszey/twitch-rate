@@ -50,6 +50,8 @@ public class PricingService {
   protected Map<String, List<Long>> emoticonTimes = new HashMap<String, List<Long>>();
 
   protected Map<String, Map<String, List<Long>>> channelMemeTimes = new HashMap<String, Map<String, List<Long>>>();
+  
+  protected Map<String, List<Long>> userTimes = new HashMap<String, List<Long>>();
 
   @Autowired
   Gson gson;
@@ -71,11 +73,26 @@ public class PricingService {
     
     long tTime = System.nanoTime();
 
-    long curTime;
+    long curTime = System.currentTimeMillis();
+
+    
+    synchronized (userTimes) {
+      for (String user : userTimes.keySet()) {
+       List<Long> times = userTimes.get(user);
+       for (Iterator<Long> iterator = times.iterator(); iterator.hasNext();) {
+         long time = iterator.next();
+         if (curTime - 30000 > time) {
+           iterator.remove();
+         }
+       }
+      }
+
+    }
+    
 
     Map<String, Integer> emoticonCounts = new HashMap<String, Integer>();
 
-    curTime = System.currentTimeMillis();
+    
     synchronized (emoticonTimes) {
       List<String> emoticonsToRemove = Lists.newArrayList();
       for (String emoticonKey : emoticonTimes.keySet()) {
@@ -193,6 +210,23 @@ public class PricingService {
 
     Message message = gson.fromJson(json, Message.class);
 
+    synchronized(userTimes){
+      String user = message.getUser();
+      List<Long> list = userTimes.get(user);
+      if (list == null) {
+        list = new ArrayList<Long>();
+        userTimes.put(user, list);
+      }
+      list.add(System.currentTimeMillis());
+      if(list.size() > 30){
+        return;
+      }
+    }
+    
+    
+    
+    
+    
     String lmsg = message.getMessage().toLowerCase();
 
     for (String emoticon : emoticonList) {
