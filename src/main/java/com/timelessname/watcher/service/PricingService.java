@@ -77,13 +77,16 @@ public class PricingService {
 
     
     synchronized (userTimes) {
-      for (String user : userTimes.keySet()) {
+      for (String user : Sets.newHashSet(userTimes.keySet())) {
        List<Long> times = userTimes.get(user);
        for (Iterator<Long> iterator = times.iterator(); iterator.hasNext();) {
          long time = iterator.next();
          if (curTime - 30000 > time) {
            iterator.remove();
          }
+       }
+       if(times.size() == 0){
+         userTimes.remove(user);
        }
       }
 
